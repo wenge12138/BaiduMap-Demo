@@ -17,10 +17,14 @@
 <script type="text/javascript">
 	// 百度地图API功能
 	var map = new BMap.Map("allmap");
-	
-	//测距变量
-	var myDis = new BMapLib.DistanceTool(map);
-	
+
+    map.enableScrollWheelZoom(true);//开启鼠标滚动
+    map.addControl(new BMap.MapTypeControl({
+        mapTypes:[
+            BMAP_NORMAL_MAP,
+            BMAP_HYBRID_MAP
+        ]}));
+
 	//设置本地坐标
 	var positionTemp = "";
 
@@ -36,30 +40,14 @@
 		}
 		else {
 			alert('failed'+this.getStatus());
-		}        
+		}
 	},{enableHighAccuracy: true})
-	//关于状态码
-	//BMAP_STATUS_SUCCESS	检索成功。对应数值“0”。
-	//BMAP_STATUS_CITY_LIST	城市列表。对应数值“1”。
-	//BMAP_STATUS_UNKNOWN_LOCATION	位置结果未知。对应数值“2”。
-	//BMAP_STATUS_UNKNOWN_ROUTE	导航结果未知。对应数值“3”。
-	//BMAP_STATUS_INVALID_KEY	非法密钥。对应数值“4”。
-	//BMAP_STATUS_INVALID_REQUEST	非法请求。对应数值“5”。
-	//BMAP_STATUS_PERMISSION_DENIED	没有权限。对应数值“6”。(自 1.1 新增)
-	//BMAP_STATUS_SERVICE_UNAVAILABLE	服务不可用。对应数值“7”。(自 1.1 新增)
-	//BMAP_STATUS_TIMEOUT	超时。对应数值“8”。(自 1.1 新增)
-	map.enableScrollWheelZoom(true);//开启鼠标滚动
-	map.addControl(new BMap.MapTypeControl({
-		mapTypes:[
-            BMAP_NORMAL_MAP,
-            BMAP_HYBRID_MAP
-        ]}));	  
-	/*缩放控件type有四种类型:
-	BMAP_NAVIGATION_CONTROL_SMALL：仅包含平移和缩放按钮；BMAP_NAVIGATION_CONTROL_PAN:仅包含平移按钮；BMAP_NAVIGATION_CONTROL_ZOOM：仅包含缩放按钮*/
+
+
+    //添加控件和比例尺
 	var top_left_control = new BMap.ScaleControl({anchor: BMAP_ANCHOR_TOP_LEFT});// 左上角，添加比例尺
-	//添加控件和比例尺
 	map.addControl(top_left_control);
-    
+
 	//定位控件
 	 var navigationControl = new BMap.NavigationControl({
 		// 靠左上角位置
@@ -86,9 +74,12 @@
 		alert(e.message);
 	  });
 	  map.addControl(geolocationControl);
-	  
-	  
-	  //创建右键菜单
+
+
+    //测距变量
+    var myDis = new BMapLib.DistanceTool(map);
+
+    //创建右键菜单
 	  var menu = new BMap.ContextMenu();
 		var txtMenuItem = [
 			{
@@ -112,21 +103,21 @@
 			menu.addItem(new BMap.MenuItem(txtMenuItem[i].text,txtMenuItem[i].callback,100));
 		}
 		map.addContextMenu(menu);
-		
+
 		//开启测距
 		/*
 		var myDis = new BMapLib.DistanceTool(map);
 		map.addEventListener("load",function(){
 			myDis.open();  //开启鼠标测距
 			//myDis.close();  //关闭鼠标测距大
-		});*/	
-		
+		});*/
+
 		//单击获取地点的经纬度
 		/*
 		map.addEventListener("click",function(e){
 			alert(e.point.lng + "," + e.point.lat);
 		});*/
-		
+
 		//添加全景按钮
 		/*
 		map.addTileLayer(new BMap.PanoramaCoverageLayer());
@@ -134,7 +125,7 @@
 		var stCtrl = new BMap.PanoramaControl(); //构造全景控件
 		stCtrl.setOffset(new BMap.Size(20, 20));
 		map.addControl(stCtrl);//添加全景控件*/
-		
+
 		//测量面积数组
 		var pointArr = new Array();
 		var polylineArr = new Array();
@@ -155,7 +146,7 @@
 			}
 			step++;
 		}
-		
+
 		//重置测量位置
 		function clearPoint(){
 			pointArr = new Array();
@@ -166,7 +157,7 @@
 			//所有显示层
 			map.clearOverlays();
 		}
-		
+
 		//计算距离
 		function calculateDistance(){
 			for (var i = 0;i < step;i++){
@@ -174,49 +165,49 @@
 					map.removeOverlay(polylineArr[i]);
 				}
 			}
-			fun(funtemp, positionTemp, pointStr, '该区域面积位', 'purple'); 
+			fun(funtemp, positionTemp, pointStr, '该区域面积位', 'purple');
 			pointArr = new Array();
 			polylineArr = new Array();
 			pointStr = "";
 			step = 0;
 			funtemp++;
 		}
-		
-		
+
+
 		//绘制图形，计算面积
-		function fun(i,xy,arr,wb,ys) {  
-            //创建经纬度数组  
-            eval("var secRingCenter" + i+" = new BMap.Point("+xy+")");  
-            eval("var secRing"+i+" = ["+arr+"]");  
-            //创建多边形  
-            eval("var secRingPolygon" + i + "= new BMap.Polygon(secRing" + i + ", { strokeColor: \"" + ys + "\", strokeWeight: 4})");  
-            //eval("var secRingPolygon" + i + "= new BMap.Polygon(secRing" + i + ", { FillColor:\"red\", strokeColor: \"blue\", strokeWeight: 2, strokeOpacity: 0.3 })");  
-      
-            //添加多边形到地图上  
-            map.addOverlay(eval("secRingPolygon"+i));  
-      
-            var resultArea = BMapLib.GeoUtils.getPolygonArea(eval("secRingPolygon" + i)); //计算多边形的面积（单位米）  
-      
-            //给多边形添加鼠标事件  
-            eval("secRingPolygon"+i).addEventListener("mouseover", function () {//鼠标经过时  
-                eval("secRingPolygon" + i).setStrokeColor("red"); //多边形边框为红色  
-                //eval("secRingPolygon" + i).setFillColor(ys);   
-                map.addOverlay(eval("secRingLabel"+i)); //添加多边形遮照  
-                //map.panTo(eval("secRingCenter"+i)); //将地图移动到指定点  
-            });  
-            eval("secRingPolygon"+i).addEventListener("mouseout", function () {  
-                eval("secRingPolygon" + i).setStrokeColor(ys);  
-                //eval("secRingPolygon" + i).setFillColor("");   
-                map.removeOverlay(eval("secRingLabel"+i));  
-            });  
-            eval("secRingPolygon"+i).addEventListener("click", function () {  
-                map.zoomIn();  
-                eval("secRingPolygon" + i).setStrokeColor(ys);  
-                //eval("secRingPolygon" + i).setFillColor("");   
-                map.setCenter(eval("secRingCenter"+i));  
-            });  
-            //创建标签  
-            eval("var secRingLabel" + i + "= new BMap.Label(\"<b>" + wb + " 面积(㎡)：" + Math.floor(resultArea) + "</b>\", { offset: new BMap.Size(0, 0), position: secRingCenter" + i + "})");  
-            eval("secRingLabel"+i).setStyle({ "z-index": "999999", "padding": "2px",  "border": "1px solid #ccff00" });  
+		function fun(i,xy,arr,wb,ys) {
+            //创建经纬度数组
+            eval("var secRingCenter" + i+" = new BMap.Point("+xy+")");
+            eval("var secRing"+i+" = ["+arr+"]");
+            //创建多边形
+            eval("var secRingPolygon" + i + "= new BMap.Polygon(secRing" + i + ", { strokeColor: \"" + ys + "\", strokeWeight: 4})");
+            //eval("var secRingPolygon" + i + "= new BMap.Polygon(secRing" + i + ", { FillColor:\"red\", strokeColor: \"blue\", strokeWeight: 2, strokeOpacity: 0.3 })");
+
+            //添加多边形到地图上
+            map.addOverlay(eval("secRingPolygon"+i));
+
+            var resultArea = BMapLib.GeoUtils.getPolygonArea(eval("secRingPolygon" + i)); //计算多边形的面积（单位米）
+
+            //给多边形添加鼠标事件
+            eval("secRingPolygon"+i).addEventListener("mouseover", function () {//鼠标经过时
+                eval("secRingPolygon" + i).setStrokeColor("red"); //多边形边框为红色
+                //eval("secRingPolygon" + i).setFillColor(ys);
+                map.addOverlay(eval("secRingLabel"+i)); //添加多边形遮照
+                //map.panTo(eval("secRingCenter"+i)); //将地图移动到指定点
+            });
+            eval("secRingPolygon"+i).addEventListener("mouseout", function () {
+                eval("secRingPolygon" + i).setStrokeColor(ys);
+                //eval("secRingPolygon" + i).setFillColor("");
+                map.removeOverlay(eval("secRingLabel"+i));
+            });
+            eval("secRingPolygon"+i).addEventListener("click", function () {
+                map.zoomIn();
+                eval("secRingPolygon" + i).setStrokeColor(ys);
+                //eval("secRingPolygon" + i).setFillColor("");
+                map.setCenter(eval("secRingCenter"+i));
+            });
+            //创建标签
+            eval("var secRingLabel" + i + "= new BMap.Label(\"<b>" + wb + " 面积(㎡)：" + Math.floor(resultArea) + "</b>\", { offset: new BMap.Size(0, 0), position: secRingCenter" + i + "})");
+            eval("secRingLabel"+i).setStyle({ "z-index": "999999", "padding": "2px",  "border": "1px solid #ccff00" });
         }
 </script>
