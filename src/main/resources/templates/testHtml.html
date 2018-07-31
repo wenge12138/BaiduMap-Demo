@@ -7,6 +7,8 @@
 	</style>
 	<script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=EFirw5SIruFFy3l9qYlUX7QB6BAf1KEa"></script>
 	<script type="text/javascript" src="http://api.map.baidu.com/library/DistanceTool/1.2/src/DistanceTool_min.js"></script>
+	<script type="text/javascript" src="http://api.map.baidu.com/library/DrawingManager/1.4/src/DrawingManager_min.js"></script>
+	<link rel="stylesheet" href="http://api.map.baidu.com/library/DrawingManager/1.4/src/DrawingManager_min.css" />
 	<script src="/js/GeoUtils.js" type="text/javascript"></script>
 	<title>测距</title>
 </head>
@@ -79,6 +81,51 @@
     //测距变量
     var myDis = new BMapLib.DistanceTool(map);
 
+    //设置鼠标绘制工具
+    var overlays = [];
+    var overlaycomplete = function (e) {
+        overlays.push(e.overlay);
+        var path = e.overlay.getPath();//Array<Point> 返回多边型的点数组
+        for (var i = 0; i < path.length; i++) {
+            console.log("lng:" + path[i].lng + "\n lat:" + path[i].lat);
+        }
+    };
+
+    var styleOptions = {
+        strokeColor: "red",    //边线颜色。
+        fillColor: "red",      //填充颜色。当参数为空时，圆形将没有填充效果。
+        strokeWeight: 3,       //边线的宽度，以像素为单位。
+        strokeOpacity: 0.8,	   //边线透明度，取值范围0 - 1。
+        fillOpacity: 0.6,      //填充的透明度，取值范围0 - 1。
+        strokeStyle: 'solid' //边线的样式，solid或dashed。
+    };
+    var drawingManager = new BMapLib.DrawingManager(map, {
+        isOpen: false, //是否开启绘制模式
+        enableDrawingTool: true, //是否显示工具栏
+        drawingToolOptions: {
+            anchor: BMAP_ANCHOR_TOP_RIGHT, //位置
+            offset: new BMap.Size(5, 5), //偏离值
+            drawingModes: [
+                BMAP_DRAWING_POLYGON
+            ],
+            drawingTypes : [
+                BMAP_DRAWING_POLYGON,//多边形的样式
+            ]
+        },
+        // enableCalculate: true, //绘制是否进行测距(画线时候)、测面(画圆、多边形、矩形)
+        polygonOptions: styleOptions, //多边形的样式
+    });
+    //添加鼠标绘制工具监听事件，用于获取绘制结果
+    drawingManager.addEventListener('overlaycomplete', overlaycomplete);
+
+    function clearAll() {
+        for (var i = 0; i < overlays.length; i++) {
+            map.removeOverlay(overlays[i]);
+        }
+        overlays.length = 0
+    }
+
+
     //创建右键菜单
 	  var menu = new BMap.ContextMenu();
 		var txtMenuItem = [
@@ -87,12 +134,8 @@
 				callback:function(){myDis.open();}
 			},
 			{
-				text:'添加测量位置',
-				callback:function(){map.addEventListener("click", addPoint);}
-			},
-			{
-				text:'测量面积',
-				callback:function(){map.removeEventListener("click", addPoint);calculateDistance();}
+				text:'添加面积',
+				callback:function(){map.addEventListener("click", measureArea);}
 			},
 			{
 				text:'重置测量位置',
@@ -104,27 +147,11 @@
 		}
 		map.addContextMenu(menu);
 
-		//开启测距
-		/*
-		var myDis = new BMapLib.DistanceTool(map);
-		map.addEventListener("load",function(){
-			myDis.open();  //开启鼠标测距
-			//myDis.close();  //关闭鼠标测距大
-		});*/
 
-		//单击获取地点的经纬度
-		/*
-		map.addEventListener("click",function(e){
-			alert(e.point.lng + "," + e.point.lat);
-		});*/
+		function measureArea(){
 
-		//添加全景按钮
-		/*
-		map.addTileLayer(new BMap.PanoramaCoverageLayer());
+		}
 
-		var stCtrl = new BMap.PanoramaControl(); //构造全景控件
-		stCtrl.setOffset(new BMap.Size(20, 20));
-		map.addControl(stCtrl);//添加全景控件*/
 
 		//测量面积数组
 		var pointArr = new Array();
