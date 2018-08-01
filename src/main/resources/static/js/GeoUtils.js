@@ -56,7 +56,7 @@ var BMapLib = window.BMapLib = BMapLib || {};
          * 该类提供的都是静态方法，勿需实例化即可使用。
          */
         BMapLib.GeoUtils = function () {
-        }
+        };
 
     /**
      * 判断点是否在矩形内
