@@ -1,3 +1,4 @@
+<!--suppress ALL -->
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
@@ -9,17 +10,18 @@
 	<script type="text/javascript" src="http://api.map.baidu.com/library/DistanceTool/1.2/src/DistanceTool_min.js"></script>
 	<script type="text/javascript" src="http://api.map.baidu.com/library/DrawingManager/1.4/src/DrawingManager_min.js"></script>
 	<link rel="stylesheet" href="http://api.map.baidu.com/library/DrawingManager/1.4/src/DrawingManager_min.css" />
+	<script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.1.0.min.js"></script>
 	<script src="/js/GeoUtils.js" type="text/javascript"></script>
 	<title>测距</title>
 </head>
 <body>
-	<div id="allmap"></div>
+<div id="allmap"></div>
 </body>
 </html>
 <script type="text/javascript">
-	// 百度地图API功能
-	var map = new BMap.Map("allmap");
+    var map = new BMap.Map("allmap", {enableMapClick:false});
 
+    var nowPoint = new Array();
     map.enableScrollWheelZoom(true);//开启鼠标滚动
     map.addControl(new BMap.MapTypeControl({
         mapTypes:[
@@ -27,59 +29,153 @@
             BMAP_HYBRID_MAP
         ]}));
 
-	//设置本地坐标
-	var positionTemp = "";
+    //测距变量
+    var myDis = new BMapLib.DistanceTool(map);
 
-	//浏览器定位
-	var geolocation = new BMap.Geolocation();
-	geolocation.getCurrentPosition(function(r){
-		if(this.getStatus() == BMAP_STATUS_SUCCESS){
-			var mk = new BMap.Marker(r.point);
-			var point = new BMap.Point(r.point.lng,r.point.lat);
-			map.addOverlay(mk);
-			map.panTo(r.point);
-			map.centerAndZoom(point,16);
-		}
-		else {
-			alert('failed'+this.getStatus());
-		}
-	},{enableHighAccuracy: true})
+    //定义控件
+    function ZoomControl1(){
+        this.defaultAnchor = BMAP_ANCHOR_BOTTOM_RIGHT;
+        this.defaultOffset = new BMap.Size(10, 10);
+    }
+    ZoomControl1.prototype = new BMap.Control();
+
+    ZoomControl1.prototype.initialize = function(map) {
+        // 创建一个DOM元素
+        var button1 = document.createElement("button");
+        // 添加文字说明
+        button1.appendChild(document.createTextNode("距离测量"));
+        button1.id = 'button1';
+        button1.onclick = function () {
+            myDis.open();
+        }
+        map.getContainer().appendChild(button1);
+        return button1;
+    }
+    var myZoomCtrl1 = new ZoomControl1();
+    map.addControl(myZoomCtrl1);
+
+
+
+    //结束测量
+    //定义控件
+    function ZoomControl4(){
+        this.defaultAnchor = BMAP_ANCHOR_BOTTOM_RIGHT;
+        this.defaultOffset = new BMap.Size(10, 10);
+    }
+    ZoomControl4.prototype = new BMap.Control();
+
+    ZoomControl4.prototype.initialize = function(map) {
+        // 创建一个DOM元素
+        var button4 = document.createElement("button");
+        // 添加文字说明
+        button4.appendChild(document.createTextNode("结束测量"));
+        button4.style.display = 'none';
+        button4.id = 'button4';
+        button4.onclick = function () {
+            endWalk();
+        }
+        map.getContainer().appendChild(button4);
+        return button4;
+    }
+    // 创建控件
+    var myZoomCtrl4 = new ZoomControl4();
+    // 添加到地图当中
+    map.addControl(myZoomCtrl4);
+
+
+
+
+    //定义控件
+    function ZoomControl2(){
+        this.defaultAnchor = BMAP_ANCHOR_BOTTOM_RIGHT;
+        this.defaultOffset = new BMap.Size(100, 10);
+    }
+    ZoomControl2.prototype = new BMap.Control();
+
+    ZoomControl2.prototype.initialize = function(map){
+        var button2 = document.createElement("button");
+        button2.appendChild(document.createTextNode("步行测量"));
+        button2.onclick = function(){map.addEventListener("click", walkDinstance());}
+        button2.id = 'button2';
+        map.getContainer().appendChild(button2);
+        return button2;
+    }
+    var myZoomCtrl2 = new ZoomControl2();
+    map.addControl(myZoomCtrl2);
+
+
+    //定义控件
+    function ZoomControl3(){
+        this.defaultAnchor = BMAP_ANCHOR_BOTTOM_RIGHT;
+        this.defaultOffset = new BMap.Size(200, 10);
+
+    }
+    ZoomControl3.prototype = new BMap.Control();
+
+    ZoomControl3.prototype.initialize = function(map){
+        var button3 = document.createElement("button");
+        button3.appendChild(document.createTextNode("重置测量位置"));
+        button3.onclick = function(){clearPoint();}
+        button3.id = 'button3';
+        map.getContainer().appendChild(button3);
+        return button3;
+    }
+    // 创建控件
+    var myZoomCtrl3 = new ZoomControl3();
+    // 添加到地图当中
+    map.addControl(myZoomCtrl3);
+
+    //设置本地坐标
+    var positionTemp = "";
+
+    //浏览器定位
+    var geolocation = new BMap.Geolocation();
+    geolocation.getCurrentPosition(function(r){
+        if(this.getStatus() == BMAP_STATUS_SUCCESS){
+            var mk = new BMap.Marker(r.point);
+            var point = new BMap.Point(r.point.lng,r.point.lat);
+            nowPoint[0] = point;
+            map.addOverlay(mk);
+            map.panTo(r.point);
+            map.centerAndZoom(point,16);
+        }
+        else {
+            alert('failed'+this.getStatus());
+        }
+    },{enableHighAccuracy: true})
 
 
     //添加控件和比例尺
-	var top_left_control = new BMap.ScaleControl({anchor: BMAP_ANCHOR_TOP_LEFT});// 左上角，添加比例尺
-	map.addControl(top_left_control);
+    var top_left_control = new BMap.ScaleControl({anchor: BMAP_ANCHOR_TOP_LEFT});// 左上角，添加比例尺
+    map.addControl(top_left_control);
 
-	//定位控件
-	 var navigationControl = new BMap.NavigationControl({
-		// 靠左上角位置
-		anchor: BMAP_ANCHOR_TOP_LEFT,
-		// LARGE类型
-		type: BMAP_NAVIGATION_CONTROL_LARGE,
-		// 启用显示定位
-		enableGeolocation: true
-	  });
-	  map.addControl(navigationControl);
-	  // 添加定位控件
-	  var geolocationControl = new BMap.GeolocationControl();
-	  geolocationControl.addEventListener("locationSuccess", function(e){
-		// 定位成功事件
-		var address = '';
-		address += e.addressComponent.province;
-		address += e.addressComponent.city;
-		address += e.addressComponent.district;
-		address += e.addressComponent.street;
-		address += e.addressComponent.streetNumber;
-	  });
-	  geolocationControl.addEventListener("locationError",function(e){
-		// 定位失败事件
-		alert(e.message);
-	  });
-	  map.addControl(geolocationControl);
+    //定位控件
+    var navigationControl = new BMap.NavigationControl({
+        // 靠左上角位置
+        anchor: BMAP_ANCHOR_TOP_LEFT,
+        // LARGE类型
+        type: BMAP_NAVIGATION_CONTROL_LARGE,
+        // 启用显示定位
+        enableGeolocation: true
+    });
+    map.addControl(navigationControl);
+    // 添加定位控件
+    var geolocationControl = new BMap.GeolocationControl();
+    geolocationControl.addEventListener("locationSuccess", function(e){
+        // 定位成功事件
+        var address = '';
+        address += e.addressComponent.province;
+        address += e.addressComponent.city;
+        address += e.addressComponent.district;
+        address += e.addressComponent.street;
+        address += e.addressComponent.streetNumber;
+    });
+    geolocationControl.addEventListener("locationError",function(e){
+        // 定位失败事件
+        alert(e.message);
+    });
+    map.addControl(geolocationControl);
 
-
-    //测距变量
-    var myDis = new BMapLib.DistanceTool(map);
 
     //设置鼠标绘制工具
     var overlays = [];
@@ -87,17 +183,17 @@
         overlays.push(e.overlay);
         var path = e.overlay.getPath();//Array<Point> 返回多边型的点数组
         for (var i = 0; i < path.length; i++) {
-			if(i == 0){
-				positionTemp = path[i].lng +','+path[i].lat;
-			pointStr += "new BMap.Point("+path[i].lng+","+path[i].lat+")";
-			}else{
-			pointStr += ",new BMap.Point("+path[i].lng+","+path[i].lat+")";
-			}
+            if(i == 0){
+                positionTemp = path[i].lng +','+path[i].lat;
+                pointStr += "new BMap.Point("+path[i].lng+","+path[i].lat+")";
+            }else{
+                pointStr += ",new BMap.Point("+path[i].lng+","+path[i].lat+")";
+            }
         }
-		fun(funtemp, positionTemp, pointStr, '该区域面积位', 'purple');
-		pointStr = "";
-		positionTemp = "";
-		funtemp++;
+        fun(funtemp, positionTemp, pointStr, '该区域面积位', 'purple');
+        pointStr = "";
+        positionTemp = "";
+        funtemp++;
     };
 
     var styleOptions = {
@@ -128,111 +224,170 @@
     drawingManager.addEventListener('overlaycomplete', overlaycomplete);
 
 
+    //测量面积数组
+    var pointArr = new Array();
+    var polylineArr = new Array();
+    var pointStr = "";
+    var step = 0;
+    var funtemp = 1;
 
-    //创建右键菜单
-	  var menu = new BMap.ContextMenu();
-		var txtMenuItem = [
-			{
-				text:'测距',
-				callback:function(){myDis.open();}
-			},
-			/*{
-				text:'添加面积',
-				callback:function(){map.addEventListener("click", measureArea);}
-			},*/
-			{
-				text:'重置测量位置',
-				callback:function(){clearPoint();}
-			}
-		];
-		for(var i=0; i < txtMenuItem.length; i++){
-			menu.addItem(new BMap.MenuItem(txtMenuItem[i].text,txtMenuItem[i].callback,100));
-		}
-		map.addContextMenu(menu);
+    //重置测量位置
+    function clearPoint(){
+        pointArr = new Array();
+        polylineArr = new Array();
+        pointStr = "";
+        step = 0;
+        funtemp = 1;
+        //所有显示层
+        map.clearOverlays();
+        var allOverLay = map.getOverlays();
+        var mk = new BMap.Marker(nowPoint[0]);
+        map.addOverlay(mk);
+    }
+
+    //绘制图形，计算面积
+    function fun(i,xy,arr,wb,ys) {
+        //创建经纬度数组
+        eval("var secRingCenter" + i+" = new BMap.Point("+xy+")");
+        eval("var secRing"+i+" = ["+arr+"]");
+        //创建多边形
+        eval("var secRingPolygon" + i + "= new BMap.Polygon(secRing" + i + ", { strokeColor: \"" + ys + "\", strokeWeight: 4})");
+        //eval("var secRingPolygon" + i + "= new BMap.Polygon(secRing" + i + ", { FillColor:\"red\", strokeColor: \"blue\", strokeWeight: 2, strokeOpacity: 0.3 })");
+
+        //添加多边形到地图上
+        map.addOverlay(eval("secRingPolygon"+i));
+
+        var resultArea = BMapLib.GeoUtils.getPolygonArea(eval("secRingPolygon" + i)); //计算多边形的面积（单位米）
+
+        if(resultArea<0 || isNaN(resultArea)){//判断值是否小于0或者不是数字
+            alert("请画规则图形");
+            clearPoint();
+            return false;
+        }
+
+        //给多边形添加鼠标事件
+        eval("secRingPolygon"+i).addEventListener("mouseover", function () {//鼠标经过时
+            eval("secRingPolygon" + i).setStrokeColor("red"); //多边形边框为红色
+            //eval("secRingPolygon" + i).setFillColor(ys);
+            map.addOverlay(eval("secRingLabel"+i)); //添加多边形遮照
+            //map.panTo(eval("secRingCenter"+i)); //将地图移动到指定点
+        });
+        eval("secRingPolygon"+i).addEventListener("mouseout", function () {
+            eval("secRingPolygon" + i).setStrokeColor(ys);
+            //eval("secRingPolygon" + i).setFillColor("");
+            map.removeOverlay(eval("secRingLabel"+i));
+        });
+        eval("secRingPolygon"+i).addEventListener("click", function () {
+            map.zoomIn();
+            eval("secRingPolygon" + i).setStrokeColor(ys);
+            //eval("secRingPolygon" + i).setFillColor("");
+            map.setCenter(eval("secRingCenter"+i));
+        });
+        //创建标签
+        eval("var secRingLabel" + i + "= new BMap.Label(\"<b>" + wb + " 面积(㎡)：" + Math.floor(resultArea) + "</b>\", { offset: new BMap.Size(0, 0), position: secRingCenter" + i + "})");
+        eval("secRingLabel"+i).setStyle({ "z-index": "999999", "padding": "2px",  "border": "1px solid #ccff00" });
+    }
 
 
-		//测量面积数组
-		// var pointArr = new Array();
-		// var polylineArr = new Array();
-		// var pointStr = "";
-		// var step = 0;
-		// var funtemp = 1;
-		// //添加测量面积点
-		// function addPoint(e){
-		// 	if(step ==0 ){
-		// 		positionTemp = e.point.lng+","+e.point.lat
-		// 		pointArr[step]=new BMap.Point(e.point.lng,e.point.lat);
-		// 		pointStr += "new BMap.Point("+e.point.lng+","+e.point.lat+")";
-		// 	}else{
-		// 		pointArr[step]=new BMap.Point(e.point.lng,e.point.lat);
-		// 		pointStr += ",new BMap.Point("+e.point.lng+","+e.point.lat+")";
-		// 		polylineArr[step]=new BMap.Polyline([pointArr[step-1],pointArr[step]], {strokeColor:"blue", strokeWeight:6, strokeOpacity:0.5});
-		// 		map.addOverlay(polylineArr[step]);
-		// 	}
-		// 	step++;
-		// }
+    <!--步行定位画点-->
+    //定义集合用来存放沿线的坐标值
+    var chartData = [];
+    //定义步行实体
+    var  walking = new BMap.WalkingRoute(map, { renderOptions: { map: map, autoViewport: true} });
+    var startpoint;
+    var endpoint;
+    var timer;
+	var marker;
+	var index;
 
-		//重置测量位置
-		function clearPoint(){
-			pointArr = new Array();
-			polylineArr = new Array();
-			pointStr = "";
-			step = 0;
-			funtemp = 1;
-			//所有显示层
+    //浏览器定位 拿到起点位置的point 存入数组charData[] 下标为1;
+    var geolocation = new BMap.Geolocation();
+    geolocation.getCurrentPosition(function(r){
+        if(this.getStatus() == BMAP_STATUS_SUCCESS){
+            marker= new BMap.Marker(r.point);
+            map.addOverlay(marker);//添加覆盖物
+            var point = new BMap.Point(r.point.lng,r.point.lat);
+            startpoint =point;
+            chartData.push(startpoint);
+            map.panTo(r.point);
+            map.centerAndZoom(point,16);
+        }
+        else {
+            alert('failed'+this.getStatus());
+        }
+    },{enableHighAccuracy: true});
+
+
+
+		function walkDinstance() {
+		    //jQuery取消按钮显示
+			$('#button1').css('display','none');
+			$('#button2').css('display','none');
+			$('#button3').css('display','none');
+			$('#button4').css('display','block');
+			//步行轨迹之前首先取消地图中所有的覆盖物
 			map.clearOverlays();
+			// map.centerAndZoom(chartData[0],25);
+            marker = new BMap.Marker(chartData[0]);
+			map.addOverlay(marker);//添加覆盖物
+            marker.enableMassClear();
+            marker.setAnimation(BMAP_ANIMATION_BOUNCE);//跳动的动画
+			getCurrentPoint();
 		}
 
-		//计算距离
-		// function calculateDistance(){
-		// 	for (var i = 0;i < step;i++){
-		// 		if(i != 0){
-		// 			map.removeOverlay(polylineArr[i]);
-		// 		}
-		// 	}
-		// 	fun(funtemp, positionTemp, pointStr, '该区域面积位', 'purple');
-		// 	pointArr = new Array();
-		// 	polylineArr = new Array();
-		// 	pointStr = "";
-		// 	step = 0;
-		// 	funtemp++;
-		// }
-        //
 
-		//绘制图形，计算面积
-		function fun(i,xy,arr,wb,ys) {
-            //创建经纬度数组
-            eval("var secRingCenter" + i+" = new BMap.Point("+xy+")");
-            eval("var secRing"+i+" = ["+arr+"]");
-            //创建多边形
-            eval("var secRingPolygon" + i + "= new BMap.Polygon(secRing" + i + ", { strokeColor: \"" + ys + "\", strokeWeight: 4})");
-            //eval("var secRingPolygon" + i + "= new BMap.Polygon(secRing" + i + ", { FillColor:\"red\", strokeColor: \"blue\", strokeWeight: 2, strokeOpacity: 0.3 })");
+		function getCurrentPoint(){
+			timer = setInterval(
+					function () {
+						geolocation.getCurrentPosition(function(r){
+							if(this.getStatus() == BMAP_STATUS_SUCCESS){
+                                map.removeOverlay(marker);
+								var point = new BMap.Point(r.point.lng,r.point.lat);
+								if(chartData[chartData.length-1] != point){
+                                    chartData.push(startpoint);
+								}
+								map.panTo(r.point);
+								map.centerAndZoom(point,25);
+                                marker = new BMap.Marker(r.point);
+								map.addOverlay(marker);//添加覆盖物
+                                marker.enableMassClear();
+                                marker.setAnimation(BMAP_ANIMATION_BOUNCE);//跳动的动画
+								console.log(point);
+							}
+							else {
+								alert('failed'+this.getStatus());
+							}
+						},{enableHighAccuracy: true});
+						addPoint();
+					},
+            			5000
+				);
+			};
+		function addPoint() {
 
-            //添加多边形到地图上
-            map.addOverlay(eval("secRingPolygon"+i));
-
-            var resultArea = BMapLib.GeoUtils.getPolygonArea(eval("secRingPolygon" + i)); //计算多边形的面积（单位米）
-
-            //给多边形添加鼠标事件
-            eval("secRingPolygon"+i).addEventListener("mouseover", function () {//鼠标经过时
-                eval("secRingPolygon" + i).setStrokeColor("red"); //多边形边框为红色
-                //eval("secRingPolygon" + i).setFillColor(ys);
-                map.addOverlay(eval("secRingLabel"+i)); //添加多边形遮照
-                //map.panTo(eval("secRingCenter"+i)); //将地图移动到指定点
-            });
-            eval("secRingPolygon"+i).addEventListener("mouseout", function () {
-                eval("secRingPolygon" + i).setStrokeColor(ys);
-                //eval("secRingPolygon" + i).setFillColor("");
-                map.removeOverlay(eval("secRingLabel"+i));
-            });
-            eval("secRingPolygon"+i).addEventListener("click", function () {
-                map.zoomIn();
-                eval("secRingPolygon" + i).setStrokeColor(ys);
-                //eval("secRingPolygon" + i).setFillColor("");
-                map.setCenter(eval("secRingCenter"+i));
-            });
-            //创建标签
-            eval("var secRingLabel" + i + "= new BMap.Label(\"<b>" + wb + " 面积(㎡)：" + Math.floor(resultArea) + "</b>\", { offset: new BMap.Size(0, 0), position: secRingCenter" + i + "})");
-            eval("secRingLabel"+i).setStyle({ "z-index": "999999", "padding": "2px",  "border": "1px solid #ccff00" });
+		    //判断当前是否有两个坐标
+			if (chartData.length >= 2){
+                    var polyline = new BMap.Polyline(
+                        [
+                            new BMap.Point(chartData[chartData.length-1]),
+                            new BMap.Point(chartData[chartData.length-2])
+                        ],
+                        {
+                            strokeColor:"red", strokeWeight:6, strokeStyle:"dashed"
+                        }
+                    );
+                    map.addOverlay(polyline);
+				}
+		}
+		function endWalk() {
+            $('#button1').css('display','block');
+            $('#button2').css('display','block');
+            $('#button3').css('display','block');
+            $('#button4').css('display','none');
+			clearInterval(timer);
+            map.removeOverlay(marker);
+            marker = new BMap.Marker(chartData[chartData.length-1]);
+            map.addOverlay(marker);//添加覆盖物
+            marker.enableMassClear();
         }
 </script>
