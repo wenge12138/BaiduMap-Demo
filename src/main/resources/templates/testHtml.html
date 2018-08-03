@@ -295,17 +295,19 @@
     var chartData = [];
     //定义步行实体
     var  walking = new BMap.WalkingRoute(map, { renderOptions: { map: map, autoViewport: true} });
+    var startMarker;
+    var endMarker;
     var startpoint;
     var endpoint;
-	var marker;
 	var index;
 
     //浏览器定位 拿到起点位置的point 存入数组charData[] 下标为1;
     var geolocation = new BMap.Geolocation();
     geolocation.getCurrentPosition(function(r){
         if(this.getStatus() == BMAP_STATUS_SUCCESS){
-            marker= new BMap.Marker(r.point);
-            map.addOverlay(marker);//添加覆盖物
+            startMarker= new BMap.Marker(r.point);
+            endMarker= new BMap.Marker(r.point);
+            map.addOverlay(startMarker);//添加覆盖物
             var point = new BMap.Point(r.point.lng,r.point.lat);
             startpoint =point;
             chartData.push(startpoint);
@@ -325,15 +327,12 @@
 			$('#button2').css('display','none');
 			$('#button3').css('display','none');
 			$('#button4').css('display','block');
-			//步行轨迹之前首先取消地图中所有的覆盖物
 			index = 1
 			ffff = true;
+            //步行轨迹之前首先取消地图中所有的覆盖物
 			map.clearOverlays();
-			// map.centerAndZoom(chartData[0],25);
-            marker = new BMap.Marker(chartData[0]);
-			map.addOverlay(marker);//添加覆盖物
-            marker.enableMassClear();
-            marker.setAnimation(BMAP_ANIMATION_BOUNCE);//跳动的动画
+			map.addOverlay(endMarker);//添加覆盖物
+            endMarker.setAnimation(BMAP_ANIMATION_BOUNCE);//跳动的动画
 			state = true;
 			getCurrentPoint();
 
@@ -341,8 +340,6 @@
         var index = 1;
 		var ffff = true;
         var timer;
-
-
 
 		function addPoint() {
 		    //判断当前是否有两个坐标
@@ -362,14 +359,15 @@
             $('#button2').css('display','block');
             $('#button3').css('display','block');
             $('#button4').css('display','none');
-            map.removeOverlay(marker);
-            marker = new BMap.Marker(chartData[chartData.length-1]);
-            map.addOverlay(marker);//添加终点覆盖物
-            var startMarker = new BMap.Marker(chartData[0]);
+            map.removeOverlay(endMarker);
+            endMarker = new BMap.Marker(chartData[chartData.length-1]);
+            map.addOverlay(endMarker);//添加终点覆盖物
             map.addOverlay(startMarker);//添加起点覆盖物
             startMarker.enableMassClear();
-            marker.enableMassClear();
+            startMarker.enableMassClear();
             ffff = false;
+            chartData = [];
+            chartData.push(endMarker);
             clearInterval(timer);
         }
 
@@ -380,7 +378,7 @@
                     geolocation.getCurrentPosition(function (r) {
                         if (ffff == true) {
                             if (this.getStatus() == BMAP_STATUS_SUCCESS) {
-                                map.removeOverlay(marker);
+                                map.removeOverlay(endMarker);
                                 var point = new BMap.Point(r.point.lng + 0.001 * index, r.point.lat + 0.001 * index);
                                 index++;
 
@@ -392,10 +390,10 @@
                                 }
 
                                 map.panTo(point);
-                                marker = new BMap.Marker(point);
-                                marker.enableMassClear();
-                                map.addOverlay(marker);//添加覆盖物
-                                marker.setAnimation(BMAP_ANIMATION_BOUNCE);//跳动的动画
+                                endMarker = new BMap.Marker(point);
+                                endMarker.enableMassClear();
+                                map.addOverlay(endMarker);//添加覆盖物
+                                endMarker.setAnimation(BMAP_ANIMATION_BOUNCE);//跳动的动画
 
                             }
                             else {
@@ -419,9 +417,10 @@
         funtemp = 1;
         //所有显示层
         map.clearOverlays();
-        var allOverLay = map.getOverlays();
-        var mk = new BMap.Marker(chartData[chartData.length-1]);
-        chartData = [];
-        map.addOverlay(mk);
+        geolocation.getCurrentPosition(function (r) {
+            startMarker = new BMap.Marker(r.point);
+		});
+        endMarker = startMarker;
+        map.addOverlay(startMarker);
     }
 </script>
