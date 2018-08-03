@@ -32,7 +32,7 @@
     //测距变量
     var myDis = new BMapLib.DistanceTool(map);
 
-    //定义控件
+    //定义控件 距离测量
     function ZoomControl1(){
         this.defaultAnchor = BMAP_ANCHOR_BOTTOM_RIGHT;
         this.defaultOffset = new BMap.Size(10, 10);
@@ -47,7 +47,7 @@
         button1.id = 'button1';
         button1.onclick = function () {
             myDis.open();
-        }
+        };
         map.getContainer().appendChild(button1);
         return button1;
     }
@@ -56,8 +56,7 @@
 
 
 
-    //结束测量
-    //定义控件
+    //定义控件 结束步行测量
     function ZoomControl4(){
         this.defaultAnchor = BMAP_ANCHOR_BOTTOM_RIGHT;
         this.defaultOffset = new BMap.Size(10, 10);
@@ -85,7 +84,7 @@
 
 
 
-    //定义控件
+    //定义控件 步行测量
     function ZoomControl2(){
         this.defaultAnchor = BMAP_ANCHOR_BOTTOM_RIGHT;
         this.defaultOffset = new BMap.Size(100, 10);
@@ -103,8 +102,26 @@
     var myZoomCtrl2 = new ZoomControl2();
     map.addControl(myZoomCtrl2);
 
+    // //定义控件 结束距离测量
+    // function ZoomControl5(){
+    //     this.defaultAnchor = BMAP_ANCHOR_BOTTOM_RIGHT;
+    //     this.defaultOffset = new BMap.Size(20, 10);
+    // }
+    // ZoomControl5.prototype = new BMap.Control();
+    //
+    // ZoomControl5.prototype.initialize = function(map){
+    //     var button5 = document.createElement("button");
+    //     button5.appendChild(document.createTextNode("面积测量"));
+    //     button5.onclick = function(){map.addEventListener("click", walkDinstance());}
+    //     button5.id = 'button5';
+    //     map.getContainer().appendChild(button5);
+    //     return button5;
+    // }
+    // var myZoomCtrl5 = new ZoomControl5();
+    // map.addControl(myZoomCtrl5);
 
-    //定义控件
+
+    //定义控件 重置测量位置
     function ZoomControl3(){
         this.defaultAnchor = BMAP_ANCHOR_BOTTOM_RIGHT;
         this.defaultOffset = new BMap.Size(200, 10);
@@ -209,7 +226,7 @@
         enableDrawingTool: true, //是否显示工具栏
         drawingToolOptions: {
             anchor: BMAP_ANCHOR_TOP_RIGHT, //位置
-            offset: new BMap.Size(5, 5), //偏离值
+            offset: new BMap.Size(100, 5), //偏离值
             drawingModes: [
                 BMAP_DRAWING_POLYGON
             ],
@@ -334,8 +351,6 @@
             marker.setAnimation(BMAP_ANIMATION_BOUNCE);//跳动的动画
 			getCurrentPoint();
 		}
-
-
 		function getCurrentPoint(){
 			timer = setInterval(
 					function () {
