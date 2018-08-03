@@ -21,7 +21,6 @@
 <script type="text/javascript">
     var map = new BMap.Map("allmap", {enableMapClick:false});
 
-    var nowPoint = new Array();
     map.enableScrollWheelZoom(true);//开启鼠标滚动
     map.addControl(new BMap.MapTypeControl({
         mapTypes:[
@@ -71,7 +70,7 @@
         button4.style.display = 'none';
         button4.id = 'button4';
         button4.onclick = function () {
-            endWalk();
+			endWalk();
         }
         map.getContainer().appendChild(button4);
         return button4;
@@ -145,21 +144,20 @@
     //设置本地坐标
     var positionTemp = "";
 
-    //浏览器定位
-    var geolocation = new BMap.Geolocation();
-    geolocation.getCurrentPosition(function(r){
-        if(this.getStatus() == BMAP_STATUS_SUCCESS){
-            var mk = new BMap.Marker(r.point);
-            var point = new BMap.Point(r.point.lng,r.point.lat);
-            nowPoint[0] = point;
-            map.addOverlay(mk);
-            map.panTo(r.point);
-            map.centerAndZoom(point,16);
-        }
-        else {
-            alert('failed'+this.getStatus());
-        }
-    },{enableHighAccuracy: true})
+    // //浏览器定位
+    // var geolocation = new BMap.Geolocation();
+    // geolocation.getCurrentPosition(function(r){
+    //     if(this.getStatus() == BMAP_STATUS_SUCCESS){
+    //         var mk = new BMap.Marker(r.point);
+    //         var point = new BMap.Point(r.point.lng,r.point.lat);
+    //         map.addOverlay(mk);
+    //         map.panTo(r.point);
+    //         map.centerAndZoom(point,16);
+    //     }
+    //     else {
+    //         alert('failed'+this.getStatus());
+    //     }
+    // },{enableHighAccuracy: true})
 
 
     //添加控件和比例尺
@@ -248,20 +246,6 @@
     var step = 0;
     var funtemp = 1;
 
-    //重置测量位置
-    function clearPoint(){
-        pointArr = new Array();
-        polylineArr = new Array();
-        pointStr = "";
-        step = 0;
-        funtemp = 1;
-        //所有显示层
-        map.clearOverlays();
-        var allOverLay = map.getOverlays();
-        var mk = new BMap.Marker(nowPoint[0]);
-        map.addOverlay(mk);
-    }
-
     //绘制图形，计算面积
     function fun(i,xy,arr,wb,ys) {
         //创建经纬度数组
@@ -313,7 +297,6 @@
     var  walking = new BMap.WalkingRoute(map, { renderOptions: { map: map, autoViewport: true} });
     var startpoint;
     var endpoint;
-    var timer;
 	var marker;
 	var index;
 
@@ -349,60 +332,82 @@
 			map.addOverlay(marker);//添加覆盖物
             marker.enableMassClear();
             marker.setAnimation(BMAP_ANIMATION_BOUNCE);//跳动的动画
+			state = true;
 			getCurrentPoint();
-		}
-		function getCurrentPoint(){
-			timer = setInterval(
-					function () {
-						geolocation.getCurrentPosition(function(r){
-							if(this.getStatus() == BMAP_STATUS_SUCCESS){
-                                map.removeOverlay(marker);
-								var point = new BMap.Point(r.point.lng,r.point.lat);
-								if(chartData[chartData.length-1] != point){
-                                    chartData.push(startpoint);
-								}
-								map.panTo(r.point);
-								map.centerAndZoom(point,25);
-                                marker = new BMap.Marker(r.point);
-								map.addOverlay(marker);//添加覆盖物
-                                marker.enableMassClear();
-                                marker.setAnimation(BMAP_ANIMATION_BOUNCE);//跳动的动画
-								console.log(point);
-							}
-							else {
-								alert('failed'+this.getStatus());
-							}
-						},{enableHighAccuracy: true});
-						addPoint();
-					},
-            			5000
-				);
-			};
-		function addPoint() {
 
+		}
+        var index = 1;
+        var timer;
+
+        function getCurrentPoint() {
+            timer = setInterval(
+                function () {
+                    geolocation.getCurrentPosition(function (r) {
+                        if (this.getStatus() == BMAP_STATUS_SUCCESS) {
+                            map.removeOverlay(marker);
+                            var point = new BMap.Point(r.point.lng + 0.001 * index, r.point.lat + 0.001 * index);
+                            index++;
+                            if (chartData[chartData.length - 1].lng != point.lng && chartData[chartData.length - 1].lat != point.lat) {
+                                chartData.push(point);
+                                addPoint();
+                            } else {
+
+                            }
+                            map.panTo(point);
+                            marker = new BMap.Marker(point);
+                            marker.enableMassClear();
+                            map.addOverlay(marker);//添加覆盖物
+                            marker.setAnimation(BMAP_ANIMATION_BOUNCE);//跳动的动画
+                        }
+                        else {
+                            alert('failed' + this.getStatus());
+                        }
+                    }, {enableHighAccuracy: true});
+                },
+                5000
+            );
+        }
+		function addPoint() {
 		    //判断当前是否有两个坐标
-			if (chartData.length >= 2){
-                    var polyline = new BMap.Polyline(
-                        [
-                            new BMap.Point(chartData[chartData.length-1]),
-                            new BMap.Point(chartData[chartData.length-2])
-                        ],
+            if (chartData.length >= 2){
+			    var A = new BMap.Point(chartData[chartData.length-1].lng,chartData[chartData.length-1].lat);
+			    var B = new BMap.Point(chartData[chartData.length-2].lng,chartData[chartData.length-2].lat);
+                    var polyline = new BMap.Polyline([A,B],
                         {
                             strokeColor:"red", strokeWeight:6, strokeStyle:"dashed"
                         }
                     );
-                    map.addOverlay(polyline);
-				}
+                map.addOverlay(polyline);
+            }
 		}
 		function endWalk() {
             $('#button1').css('display','block');
             $('#button2').css('display','block');
             $('#button3').css('display','block');
             $('#button4').css('display','none');
-			clearInterval(timer);
             map.removeOverlay(marker);
             marker = new BMap.Marker(chartData[chartData.length-1]);
-            map.addOverlay(marker);//添加覆盖物
+            map.addOverlay(marker);//添加终点覆盖物
+            var startMarker = new BMap.Marker(chartData[0]);
+            map.addOverlay(startMarker);//添加起点覆盖物
+            startMarker.enableMassClear();
             marker.enableMassClear();
+            window.clearInterval(timer);
         }
+
+
+    //重置测量位置
+    function clearPoint(){
+        pointArr = new Array();
+        polylineArr = new Array();
+        pointStr = "";
+        step = 0;
+        funtemp = 1;
+        //所有显示层
+        map.clearOverlays();
+        var allOverLay = map.getOverlays();
+        var mk = new BMap.Marker(chartData[chartData.length-1]);
+        chartData = [];
+        map.addOverlay(mk);
+    }
 </script>
