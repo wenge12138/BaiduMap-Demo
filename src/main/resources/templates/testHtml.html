@@ -326,6 +326,8 @@
 			$('#button3').css('display','none');
 			$('#button4').css('display','block');
 			//步行轨迹之前首先取消地图中所有的覆盖物
+			index = 1
+			ffff = true;
 			map.clearOverlays();
 			// map.centerAndZoom(chartData[0],25);
             marker = new BMap.Marker(chartData[0]);
@@ -337,36 +339,11 @@
 
 		}
         var index = 1;
+		var ffff = true;
         var timer;
 
-        function getCurrentPoint() {
-            timer = setInterval(
-                function () {
-                    geolocation.getCurrentPosition(function (r) {
-                        if (this.getStatus() == BMAP_STATUS_SUCCESS) {
-                            map.removeOverlay(marker);
-                            var point = new BMap.Point(r.point.lng + 0.001 * index, r.point.lat + 0.001 * index);
-                            index++;
-                            if (chartData[chartData.length - 1].lng != point.lng && chartData[chartData.length - 1].lat != point.lat) {
-                                chartData.push(point);
-                                addPoint();
-                            } else {
 
-                            }
-                            map.panTo(point);
-                            marker = new BMap.Marker(point);
-                            marker.enableMassClear();
-                            map.addOverlay(marker);//添加覆盖物
-                            marker.setAnimation(BMAP_ANIMATION_BOUNCE);//跳动的动画
-                        }
-                        else {
-                            alert('failed' + this.getStatus());
-                        }
-                    }, {enableHighAccuracy: true});
-                },
-                5000
-            );
-        }
+
 		function addPoint() {
 		    //判断当前是否有两个坐标
             if (chartData.length >= 2){
@@ -392,8 +369,45 @@
             map.addOverlay(startMarker);//添加起点覆盖物
             startMarker.enableMassClear();
             marker.enableMassClear();
-            window.clearInterval(timer);
+            ffff = false;
+            clearInterval(timer);
         }
+
+    function getCurrentPoint() {
+        timer = setInterval(
+            function () {
+                if (ffff == true) {
+                    geolocation.getCurrentPosition(function (r) {
+                        if (ffff == true) {
+                            if (this.getStatus() == BMAP_STATUS_SUCCESS) {
+                                map.removeOverlay(marker);
+                                var point = new BMap.Point(r.point.lng + 0.001 * index, r.point.lat + 0.001 * index);
+                                index++;
+
+                                if (chartData[chartData.length - 1].lng != point.lng && chartData[chartData.length - 1].lat != point.lat) {
+                                    chartData.push(point);
+                                    addPoint();
+                                } else {
+
+                                }
+
+                                map.panTo(point);
+                                marker = new BMap.Marker(point);
+                                marker.enableMassClear();
+                                map.addOverlay(marker);//添加覆盖物
+                                marker.setAnimation(BMAP_ANIMATION_BOUNCE);//跳动的动画
+
+                            }
+                            else {
+                                alert('failed' + this.getStatus());
+                            }
+						}
+
+                    }, {enableHighAccuracy: true,});
+                }      	},
+            3000
+        );
+    }
 
 
     //重置测量位置
