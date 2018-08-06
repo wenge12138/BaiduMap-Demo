@@ -12,6 +12,7 @@
 	<link rel="stylesheet" href="http://api.map.baidu.com/library/DrawingManager/1.4/src/DrawingManager_min.css" />
 	<script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.1.0.min.js"></script>
 	<script src="/js/GeoUtils.js" type="text/javascript"></script>
+	<!--<script src="GeoUtils.js" type="text/javascript"></script>-->
 	<title>测距</title>
 </head>
 <body>
@@ -70,7 +71,7 @@
         button4.style.display = 'none';
         button4.id = 'button4';
         button4.onclick = function () {
-			endWalk();
+            endWalk();
         }
         map.getContainer().appendChild(button4);
         return button4;
@@ -299,7 +300,7 @@
     var endMarker;
     var startpoint;
     var endpoint;
-	var index;
+    var index;
 
     //浏览器定位 拿到起点位置的point 存入数组charData[] 下标为1;
     var geolocation = new BMap.Geolocation();
@@ -321,55 +322,55 @@
 
 
 
-		function walkDinstance() {
-		    //jQuery取消按钮显示
-			$('#button1').css('display','none');
-			$('#button2').css('display','none');
-			$('#button3').css('display','none');
-			$('#button4').css('display','block');
-			index = 1
-			ffff = true;
-            //步行轨迹之前首先取消地图中所有的覆盖物
-			map.clearOverlays();
-			map.addOverlay(endMarker);//添加覆盖物
-            endMarker.setAnimation(BMAP_ANIMATION_BOUNCE);//跳动的动画
-			state = true;
-			getCurrentPoint();
+    function walkDinstance() {
+        //jQuery取消按钮显示
+        $('#button1').css('display','none');
+        $('#button2').css('display','none');
+        $('#button3').css('display','none');
+        $('#button4').css('display','block');
+        index = 1
+        ffff = true;
+        //步行轨迹之前首先取消地图中所有的覆盖物
+        map.clearOverlays();
+        map.addOverlay(endMarker);//添加覆盖物
+        endMarker.setAnimation(BMAP_ANIMATION_BOUNCE);//跳动的动画
+        state = true;
+        getCurrentPoint();
 
-		}
-        var index = 1;
-		var ffff = true;
-        var timer;
+    }
+    var index = 1;
+    var ffff = true;
+    var timer;
 
-		function addPoint() {
-		    //判断当前是否有两个坐标
-            if (chartData.length >= 2){
-			    var A = new BMap.Point(chartData[chartData.length-1].lng,chartData[chartData.length-1].lat);
-			    var B = new BMap.Point(chartData[chartData.length-2].lng,chartData[chartData.length-2].lat);
-                    var polyline = new BMap.Polyline([A,B],
-                        {
-                            strokeColor:"red", strokeWeight:6, strokeStyle:"dashed"
-                        }
-                    );
-                map.addOverlay(polyline);
-            }
-		}
-		function endWalk() {
-            $('#button1').css('display','block');
-            $('#button2').css('display','block');
-            $('#button3').css('display','block');
-            $('#button4').css('display','none');
-            map.removeOverlay(endMarker);
-            endMarker = new BMap.Marker(chartData[chartData.length-1]);
-            map.addOverlay(endMarker);//添加终点覆盖物
-            map.addOverlay(startMarker);//添加起点覆盖物
-            startMarker.enableMassClear();
-            startMarker.enableMassClear();
-            ffff = false;
-            chartData = [];
-            chartData.push(endMarker);
-            clearInterval(timer);
+    function addPoint() {
+        //判断当前是否有两个坐标
+        if (chartData.length >= 2){
+            var A = new BMap.Point(chartData[chartData.length-1].lng,chartData[chartData.length-1].lat);
+            var B = new BMap.Point(chartData[chartData.length-2].lng,chartData[chartData.length-2].lat);
+            var polyline = new BMap.Polyline([A,B],
+                {
+                    strokeColor:"red", strokeWeight:6, strokeStyle:"dashed"
+                }
+            );
+            map.addOverlay(polyline);
         }
+    }
+    function endWalk() {
+        $('#button1').css('display','block');
+        $('#button2').css('display','block');
+        $('#button3').css('display','block');
+        $('#button4').css('display','none');
+        map.removeOverlay(endMarker);
+        endMarker = new BMap.Marker(chartData[chartData.length-1]);
+        map.addOverlay(endMarker);//添加终点覆盖物
+        map.addOverlay(startMarker);//添加起点覆盖物
+        startMarker.enableMassClear();
+        startMarker.enableMassClear();
+        ffff = false;
+        chartData = [];
+        chartData.push(endMarker.point);
+        clearInterval(timer);
+    }
 
     function getCurrentPoint() {
         timer = setInterval(
@@ -399,7 +400,7 @@
                             else {
                                 alert('failed' + this.getStatus());
                             }
-						}
+                        }
 
                     }, {enableHighAccuracy: true,});
                 }      	},
@@ -415,12 +416,15 @@
         pointStr = "";
         step = 0;
         funtemp = 1;
+        index = 1;
+        chartData = [];
         //所有显示层
         map.clearOverlays();
         geolocation.getCurrentPosition(function (r) {
             startMarker = new BMap.Marker(r.point);
-		});
+        });
         endMarker = startMarker;
+        chartData.push(startMarker.point);
         map.addOverlay(startMarker);
     }
 </script>
